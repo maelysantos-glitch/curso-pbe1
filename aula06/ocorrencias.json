@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1786644434904,
+    "montadora": "Scania",
+    "placa": "SCA-988",
+    "descricao": "Superaquecimento de motor",
+    "gravidade": "ALTA",
+    "data_registro": "2026-08-13T18:07:14.904Z"
+  },
+  {
+    "id": 1786644434925,
+    "montadora": "Mercedes-Benz",
+    "placa": "MBB-1122",
+    "descricao": "Troca de pastilhas de freio",
+    "gravidade": "BAIXA",
+    "data_registro": "2026-08-13T18:07:14.925Z"
+  },
+  {
+    "id": 1786646452152,
+    "montadora": "Scania",
+    "placa": "SCA-988",
+    "descricao": "Superaquecimento de motor",
+    "gravidade": "ALTA",
+    "data_registro": "2026-08-13T18:40:52.152Z"
+  },
+  {
+    "id": 1786646452172,
+    "montadora": "Mercedes-Benz",
+    "placa": "MBB-1122",
+    "descricao": "Troca de pastilhas de freio",
+    "gravidade": "BAIXA",
+    "data_registro": "2026-08-13T18:40:52.172Z"
+  },
+  {
+    "id": 1786646999999,
+    "montadora": "Volvo",
+    "placa": "VLV-2233",
+    "descricao": "Falha no sistema de freios",
+    "gravidade": "ALTA",
+    "data_registro": "2026-08-13T19:00:00.000Z"
+  },
+  {
+    "id": 1786665050796,
+    "montadora": "Volvo",
+    "placa": "VLV-2233",
+    "descricao": "Falha no sistema de freios",
+    "gravidade": "ALTA",
+    "data_registro": "2026-08-13T23:50:50.796Z"
+  }
+]
