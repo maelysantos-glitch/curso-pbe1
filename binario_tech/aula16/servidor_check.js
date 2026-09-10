@@ -16,3 +16,4 @@ app.get('/api/v1/status-servidor', (req, res) => {
 app.listen(PORT, () => {
    console.log(`[Binário Tech] Servidor de Validação da Aula 16 ativo na porta ${PORT}`);
 });
+// alteração de teste
