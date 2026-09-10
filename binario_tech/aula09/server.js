@@ -3,7 +3,7 @@ const cors = require('cors');
 const telemetriaRoutes = require('./src/routes/telemetriaroutes');
 
 const app = express();
-const PORT = 3000;
+const PORT = 3023;
 
 app.use(cors());
 app.use(express.json());

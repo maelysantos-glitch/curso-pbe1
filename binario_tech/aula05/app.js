@@ -6,7 +6,7 @@ const motoristasRouter = require('./routes/motoristas');
 const manutencoesRouter = require('./routes/manutencoes');
 
 const app = express();
-const PORT = 3000;
+const PORT = 3023;
 
 //midllewares Globais 
 app.use(cors());

@@ -19,6 +19,6 @@ app.use((req, res) => {
 // Middleware centralizado de tratamento de erros
 app.use(tratarErros);
 
-app.listen(3000, () => {
+app.listen(3023, () => {
   console.log('[Binário Tech] Servidor da Aula 10 Ativo na porta 3000');
 });
