@@ -56,6 +56,6 @@ app.delete('/api/v1/manutencoes/:id', async (req, res) => {
   }
 });
 
-app.listen(3000, () => {
-  console.log('[Binário Tech] Servidor NoSQL Aula 12 ativo na porta 3000');
+app.listen(3010, () => {
+  console.log('[Binário Tech] Servidor NoSQL Aula 12 ativo na porta 3010');
 });
