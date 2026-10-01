@@ -2,6 +2,9 @@ Histórico de Atualizações
 10/09/2026: Alteração da porta padrão da aplicação de 3000 para 3023.
 
 Dia 24/09/2026
+
+Aula 19:
+
 # Exercício 1 - Limite de memória com PM2
 
 Curso PBE1 (Binário Tech).
