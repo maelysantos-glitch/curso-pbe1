@@ -46,4 +46,12 @@ app.listen(PORT, () => {
     console.log(`Servidor rodando com sucesso na porta ${PORT}`);
 }); 
 
-
+// Rota de Informação da Montadora Volkswagen
+app.get('/vw/info', (req, res) => {
+    res.json({
+        montadora: "Volkswagen",
+        foco: "Veículos Comerciais e Utilitários",
+        sistema_telemetria: "Ativo",
+        unidades_conectadas: 980
+    });
+}); 
