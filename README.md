@@ -293,7 +293,7 @@ Filtrar a resposta da rota `/api/v1/vw` para exibir apenas os campos
 # Comando utilizado
 
 ```bash
-curl -s http://localhost:3000/api/v1/vw | jq '{montadora, status}'
+curl -s http://localhost:3001/api/v1/vw | jq '{montadora, status}' 
 ```
 # Explicação
 
