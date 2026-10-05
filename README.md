@@ -1,38 +1,6 @@
 Histórico de Atualizações
 10/09/2026: Alteração da porta padrão da aplicação de 3000 para 3023.
 
-Aula 1: PROGRAMACAO BACK-END 1 (PBE1) - CONSULTORIA BINARIO TECH
-
-O que é um JSON?
-É um formato de arquivo usado para organizar informações no computador em pares de pergunta e resposta (chave e valor). Por exemplo, a chave "cargo" tem o valor "Desenvolvedor Jr".
-
-Como eu Criei?:
-
- ``nano dev.json``
-
-O nano é um editor de texto simples que roda dentro do próprio terminal.
-O dev.json é o nome do arquivo que você está criando.
-
-Dentro digitamos:
-
-{
-  "nome": "Seu Nome Completo",
-  "cargo": "Desenvolvedor Jr",
-  "montadora_favorita": "Scania",
-  "status": "Ativo"
-}
-
-Salvamos: 
-
-Aperte Ctrl + O para salvar (pressione Enter para confirmar).
-
-Aperte Ctrl + X para sair do editor e voltar para o terminal.
-
-Exercício 2: Lendo o arquivo sem abrir No terminal, digitamos $ cat dev.json.   
-O que o cat faz: esse comando serve para mostrar o texto do arquivo direto na tela do terminal, sem você precisar abrir um editor para ver o que tem dentro.  
-
-Exercício 3: Contando quantas linhas o arquivo tem No terminal, você digita $ wc -l dev.json.   O que o wc faz: O comando wc significa word count (contador de palavras).O que o -l faz: A opção -l fala para o Linux contar apenas as linhas (lines) em vez de palavras ou caracteres. Ele vai ler o arquivo dev.json e devolver um número na tela dizendo quantas linhas aquele arquivo possui.
-
 Dia 24/09/2026
 Aula 19:
 
