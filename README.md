@@ -139,7 +139,7 @@ Efetuar uma requisição GET para a rota `/api/v1/scania` via cURL e usar o
 # Comando que eu utilizei
 
 ```bash
-curl -s http://localhost:3000/api/v1/scania | jq '.modelo'
+curl -s http://localhost:3023/api/v1/scania | jq '.modelo'
 ```
 
 # Explicação de Cada parte 
