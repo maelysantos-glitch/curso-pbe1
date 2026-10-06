@@ -1,0 +1,17 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8084:5000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:
