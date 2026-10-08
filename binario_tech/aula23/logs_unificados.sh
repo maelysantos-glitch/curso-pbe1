@@ -6,3 +6,4 @@ cd "$(dirname "$0")" || exit 1
 
 echo "[Binário Tech] Monitorando logs de app e redis (Ctrl+C para sair)..."
 docker compose logs -f --tail=20
+# aula23 - ajuste final
