@@ -203,7 +203,7 @@ app.get('/api/v1/volvo', (req, res) => {
 ```bash
 pm2 list                  # confira o nome do processo
 pm2 restart telemetria    # use o nome que apareceu no pm2 list
-curl -s http://localhost:3023/api/v1/volvo
+curl -s http://localhost:3023/api/v1/volvo | jq '.' 
 ```
 
 ---
