@@ -94,32 +94,11 @@ git push origin main
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
--------------------------------------------------------------------------------
 # Atividade | Aula 03 - CLI: curl, httpie, jq e gerenciamento de pacotes
 
-Dia:04/10/2026
+Dia: 04/10/2026
 
-# Ambiente
+## Ambiente
 
 - Google Cloud Shell
 - curl
@@ -127,107 +106,116 @@ Dia:04/10/2026
 - jq
 - Node.js / npm
 
-------
+> Porta da aplicação: `3023` (confira com `grep listen telemetria.js`)
 
-#Exercício 1 - GET com curl e jq
+---
 
-# Objetivo do exercício 
+# Exercício 1 - GET com curl e jq
+
+## Objetivo do exercício
 
 Efetuar uma requisição GET para a rota `/api/v1/scania` via cURL e usar o
-`jq` para exibir somente a chave `modelo`. 
+`jq` para exibir somente a chave `modelo`.
 
-# Comando que eu utilizei
+## Comando que eu utilizei
 
 ```bash
 curl -s http://localhost:3023/api/v1/scania | jq '.modelo'
 ```
 
-# Explicação de Cada parte 
+## Explicação de cada parte
 
 | Parte | Função |
 |---|---|
 | `curl -s` | faz a requisição GET de forma silenciosa (sem barra de progresso) |
 | `jq '.modelo'` | filtra o JSON de resposta e exibe apenas o campo `modelo` |
 
+---
 
 # Exercício 2 - Requisição com httpie e salvamento em arquivo
 
-# Objetivo do exercício
+## Objetivo do exercício
 
 Fazer uma requisição para a rota `/api/v1/mercedes` utilizando a ferramenta
 `httpie` e salvar o resultado no arquivo `mercedes.json`.
 
-# Comandos em q eu utilizei: 
+## Comando que eu utilizei
+
+## Resultado
 
 ```bash
-http GET localhost:3000/api/v1/mercedes > mercedes.json
+cat mercedes.json
 ```
-# Explicação
+
+```json
+{"montadora":"Mercedes-Benz","modelo":"Actros","status":"OK","conexão":true,"velocidade_media":78}
+```
+
+## Explicação
 
 | Parte | Função |
 |---|---|
 | `http GET ...` | faz a requisição GET usando o httpie |
 | `> mercedes.json` | redireciona a saída do comando para o arquivo |
 
-----------------------------
+---
 
 # Exercício 3 - Leitura e filtro com jq
 
-# Objetivo do exercício 
+## Objetivo do exercício
 
 Utilizar o `jq` para ler o arquivo `mercedes.json` e filtrar apenas o valor
 do campo `status`.
 
-# Comando utilizado
+## Comando utilizado
 
 ```bash
 jq '.status' mercedes.json
 ```
 
-------------------------------
+---
 
 # Exercício 4 - Nova rota na aplicação
 
-# Objetivo do exercício 
+## Objetivo do exercício
 
 Editar o arquivo `telemetria.js` e adicionar uma nova rota `/api/v1/volvo`
 retornando os dados do modelo `FH 540`. Reiniciar a aplicação e testar a
 rota.
 
-# O que foi feito
+## O que foi feito
 
 1. Abri o arquivo `telemetria.js`.
-2. Adicionei a rota `/api/v1/volvo`, retornando um JSON com o modelo `FH 540`.
+2. Adicionei a rota `/api/v1/volvo` (antes do `app.listen(...)`), retornando um JSON com o modelo `FH 540`.
 3. Reiniciei a aplicação (via PM2 ou `node telemetria.js`).
 4. Testei a rota nova com curl.
 
-# Trecho adicionado em `telemetria.js`
+## Trecho adicionado em `telemetria.js`
 
 ```js
 app.get('/api/v1/volvo', (req, res) => {
   res.json({ modelo: "FH 540", status: "ativo" });
 });
 ```
-# Como testar?
+
+## Como testar
 
 ```bash
-pm2 restart telemetria
-curl -s http://localhost:3000/api/v1/volvo
+pm2 list                  # confira o nome do processo
+pm2 restart telemetria    # use o nome que apareceu no pm2 list
+curl -s http://localhost:3023/api/v1/volvo
 ```
 
---------------------------------------------
+---
 
 # Exercício 5 - Script "start" no package.json
 
-# Objetivo do exercício 
+## Objetivo do exercício
 
 Configurar o arquivo `package.json` adicionando um script `"start": "node telemetria.js"`.
 Testar a execução usando `npm start`.
 
-Configurar o arquivo `package.json` adicionando um script `"start": "node telemetria.js"`.
-Testar a execução usando `npm start`.
-
-# Trecho adicionado em `package.json`
+## Trecho adicionado em `package.json`
 
 ```json
 "scripts": {
@@ -235,22 +223,24 @@ Testar a execução usando `npm start`.
 }
 ```
 
-# Como testar
+## Como testar
 
 ```bash
 npm start
 ```
--------------------------------------------------------------
+
+---
 
 # Exercício 6 - Redirecionar resultado de auditoria para log
 
-# Objetivo
+## Objetivo
 
 Criar um comando que direcione o resultado da auditoria do script
 `testar_telemetria.sh` para um arquivo de log chamado `relatorio.log`.
 
-Código feito:
+## Código do script `testar_telemetria.sh`
 
+```bash
 #!/bin/bash
 echo "======================================="
 echo "Auditoria De Telemetria - Binario Tech "
@@ -258,66 +248,73 @@ echo " Data/Hora: $(date)"
 echo "======================================="
 
 echo -e "\n[1] Testando Rota Scania..."
-curl -s http://localhost:3001/api/v1/scania|jq .
+curl -s http://localhost:3023/api/v1/scania | jq .
 
 echo -e "\n[2] Testando Rota Mercedes-Benz..."
-curl -s http://localhost:3001/api/v1/mercedes|jq .
+curl -s http://localhost:3023/api/v1/mercedes | jq .
 
 echo -e "\n[3] Testando Rota Volkswagen..."
-curl -s http://localhost:3001/api/v1/vw | jq . 
+curl -s http://localhost:3023/api/v1/vw | jq .
 
 echo -e "\n----------------------------------"
 echo "Auditoria Finalizada com Sucesso!"
+```
 
-# Comando utilizado
+## Comando utilizado
 
 ```bash
-./testar_telemetria.sh > relatorio.log
+chmod +x testar_telemetria.sh
+./testar_telemetria.sh 
+cat relatorio.log
 ```
-# Explicação
+
+
+## Explicação
 
 | Parte | Função |
 |---|---|
+| `chmod +x` | dá permissão de execução ao script |
 | `./testar_telemetria.sh` | executa o script de auditoria |
 | `> relatorio.log` | redireciona toda a saída do script para o arquivo de log |
 
 ---
+
 # Exercício 7 - Filtrar múltiplos campos em uma única chamada jq
 
-# Objetivo
+## Objetivo
 
 Filtrar a resposta da rota `/api/v1/vw` para exibir apenas os campos
 `montadora` e `status` em uma única chamada `jq`.
 
-
-# Comando utilizado
+## Comando utilizado
 
 ```bash
-curl -s http://localhost:3001/api/v1/vw | jq '{montadora, status}' 
+curl -s http://localhost:3023/api/v1/vw | jq '{montadora, status}'
 ```
-# Explicação
+
+## Explicação
 
 | Parte | Função |
 |---|---|
 | `jq '{montadora, status}'` | monta um novo objeto JSON contendo apenas os campos `montadora` e `status` |
 
-------------------------------------------
+---
 
 # Exercício 8 - Localizar e encerrar processo Node.js
 
-# Objetivo da atividade
+## Objetivo da atividade
 
 Localizar o PID do processo Node.js em execução no terminal usando
 `ps aux | grep node` e encerrá-lo com o comando `kill -9 <PID>`.
 
-# Comandos utilizados
+## Comandos utilizados
 
 ```bash
 ps aux | grep node
 kill -9 <PID>
 ```
 
-# Explicação
+## Explicação
 
 | Parte | Função |
 |---|---|
@@ -325,8 +322,16 @@ kill -9 <PID>
 | `grep node` | filtra a lista, mostrando só os processos relacionados ao Node.js |
 | `kill -9 <PID>` | encerra o processo imediatamente, usando o PID identificado |
 
------------------------------------------------------
+## Resultado
 
+```bash
+ps aux | grep node
+# PID encontrado na linha "node telemetria.js": 3136
+kill -9 3136
+```
+
+> Atenção: o PID certo é o da linha com `node telemetria.js` (coluna USER = meu usuário), não o da linha do próprio `grep`.
+---------------------------------------------------------------------
 # Comandos Git utilizados
 
 ```bash
