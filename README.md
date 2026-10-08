@@ -106,7 +106,7 @@ Dia: 04/10/2026
 - jq
 - Node.js / npm
 
-> Porta da aplicação: `3023` (confira com `grep listen telemetria.js`)
+> Porta da aplicação: `3023` (confira com `grep -n PORT telemetria.js`)
 
 ---
 
