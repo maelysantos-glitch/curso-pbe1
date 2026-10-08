@@ -1,37 +1,357 @@
 Histórico de Atualizações
 10/09/2026: Alteração da porta padrão da aplicação de 3000 para 3023.
 
-Aula 1: PROGRAMACAO BACK-END 1 (PBE1) - CONSULTORIA BINARIO TECH
 
-O que é um JSON?
-É um formato de arquivo usado para organizar informações no computador em pares de pergunta e resposta (chave e valor). Por exemplo, a chave "cargo" tem o valor "Desenvolvedor Jr".
+# Atividade | Aula 01 - PBE1 (Binário Tech)
 
-Como eu Criei?:
+Programação Back-end 1 - Consultoria Binário Tech.
 
- ``nano dev.json``
+## Ambiente
 
-O nano é um editor de texto simples que roda dentro do próprio terminal.
-O dev.json é o nome do arquivo que você está criando.
+- Google Cloud Shell
+- Editor de texto nano
+- Linux (comandos básicos)
 
-Dentro digitamos:
+-------------------
 
+# Exercício 1 - Criar arquivo dev.json com nano
+
+# Objetivo
+
+Criar um arquivo chamado `dev.json` usando o editor de texto `nano` e
+inserir uma estrutura básica em JSON com informações pessoais.
+
+# O que foi feito
+
+1. Abri o editor nano para criar o arquivo:
+```bash
+   nano dev.json
+```
+
+2. Digitei a estrutura JSON com os dados pedidos.
+3. Salvei o arquivo com `Ctrl+O`, `Enter`, e saí do editor com `Ctrl+X`.
+
+# Conteúdo do `dev.json`
+
+```json
 {
   "nome": "Seu Nome Completo",
   "cargo": "Desenvolvedor Jr",
   "montadora_favorita": "Scania",
   "status": "Ativo"
 }
+```
 
-Salvamos: 
+---------------------------------------------
 
-Aperte Ctrl + O para salvar (pressione Enter para confirmar).
+# Exercício 2 - Visualizar o conteúdo do arquivo
 
-Aperte Ctrl + X para sair do editor e voltar para o terminal.
+# Objetivo
 
-Exercício 2: Lendo o arquivo sem abrir No terminal, digitamos $ cat dev.json.   
-O que o cat faz: esse comando serve para mostrar o texto do arquivo direto na tela do terminal, sem você precisar abrir um editor para ver o que tem dentro.  
+Visualizar o conteúdo do arquivo criado diretamente no terminal.
 
-Exercício 3: Contando quantas linhas o arquivo tem No terminal, você digita $ wc -l dev.json.   O que o wc faz: O comando wc significa word count (contador de palavras).O que o -l faz: A opção -l fala para o Linux contar apenas as linhas (lines) em vez de palavras ou caracteres. Ele vai ler o arquivo dev.json e devolver um número na tela dizendo quantas linhas aquele arquivo possui.
+# Comando utilizado
+
+```bash
+cat dev.json
+```
+
+# Explicação
+
+| Parte | Função |
+|---|---|
+| `cat dev.json` | exibe o conteúdo completo do arquivo no terminal |
+
+---------------------------------------------
+
+ Exercício 3 - Contar o número de linhas do arquivo
+
+# Objetivo
+
+Contar o número de linhas do arquivo usando um comando do Linux.
+
+# Comando utilizado
+
+```bash
+wc -l dev.json
+```
+
+#Explicação
+
+| Parte | Função |
+|---|---|
+| `wc -l` | conta o número de linhas do arquivo informado |
+
+---
+# Comandos Git utilizados
+
+```bash
+git add dev.json
+git commit -m "Adiciona atividade aula01 (dev.json)"
+git push origin main
+```
+------------------------------------
+
+
+
+# Atividade | Aula 03 - CLI: curl, httpie, jq e gerenciamento de pacotes
+
+Dia: 04/10/2026
+
+## Ambiente
+
+- Google Cloud Shell
+- curl
+- httpie
+- jq
+- Node.js / npm
+
+> Porta da aplicação: `3023` (confira com `grep -n PORT telemetria.js`)
+
+---
+
+# Exercício 1 - GET com curl e jq
+
+## Objetivo do exercício
+
+Efetuar uma requisição GET para a rota `/api/v1/scania` via cURL e usar o
+`jq` para exibir somente a chave `modelo`.
+
+## Comando que eu utilizei
+
+```bash
+curl -s http://localhost:3023/api/v1/scania | jq '.modelo'
+```
+
+## Explicação de cada parte
+
+| Parte | Função |
+|---|---|
+| `curl -s` | faz a requisição GET de forma silenciosa (sem barra de progresso) |
+| `jq '.modelo'` | filtra o JSON de resposta e exibe apenas o campo `modelo` |
+
+---
+
+# Exercício 2 - Requisição com httpie e salvamento em arquivo
+
+## Objetivo do exercício
+
+Fazer uma requisição para a rota `/api/v1/mercedes` utilizando a ferramenta
+`httpie` e salvar o resultado no arquivo `mercedes.json`.
+
+## Comando que eu utilizei
+
+## Resultado
+
+```bash
+cat mercedes.json
+```
+
+```json
+{"montadora":"Mercedes-Benz","modelo":"Actros","status":"OK","conexão":true,"velocidade_media":78}
+```
+
+## Explicação
+
+| Parte | Função |
+|---|---|
+| `http GET ...` | faz a requisição GET usando o httpie |
+| `> mercedes.json` | redireciona a saída do comando para o arquivo |
+
+---
+
+# Exercício 3 - Leitura e filtro com jq
+
+## Objetivo do exercício
+
+Utilizar o `jq` para ler o arquivo `mercedes.json` e filtrar apenas o valor
+do campo `status`.
+
+## Comando utilizado
+
+```bash
+jq '.status' mercedes.json
+```
+
+---
+
+# Exercício 4 - Nova rota na aplicação
+
+## Objetivo do exercício
+
+Editar o arquivo `telemetria.js` e adicionar uma nova rota `/api/v1/volvo`
+retornando os dados do modelo `FH 540`. Reiniciar a aplicação e testar a
+rota.
+
+## O que foi feito
+
+1. Abri o arquivo `telemetria.js`.
+2. Adicionei a rota `/api/v1/volvo` (antes do `app.listen(...)`), retornando um JSON com o modelo `FH 540`.
+3. Reiniciei a aplicação (via PM2 ou `node telemetria.js`).
+4. Testei a rota nova com curl.
+
+## Trecho adicionado em `telemetria.js`
+
+```js
+app.get('/api/v1/volvo', (req, res) => {
+  res.json({ modelo: "FH 540", status: "ativo" });
+});
+```
+
+## Como testar
+
+```bash
+pm2 list                  # confira o nome do processo
+pm2 restart telemetria    # use o nome que apareceu no pm2 list
+curl -s http://localhost:3023/api/v1/volvo
+```
+
+---
+
+# Exercício 5 - Script "start" no package.json
+
+## Objetivo do exercício
+
+Configurar o arquivo `package.json` adicionando um script `"start": "node telemetria.js"`.
+Testar a execução usando `npm start`.
+
+## Trecho adicionado em `package.json`
+
+```json
+"scripts": {
+  "start": "node telemetria.js"
+}
+```
+
+## Como testar
+
+```bash
+npm start
+```
+
+---
+
+# Exercício 6 - Redirecionar resultado de auditoria para log
+
+## Objetivo
+
+Criar um comando que direcione o resultado da auditoria do script
+`testar_telemetria.sh` para um arquivo de log chamado `relatorio.log`.
+
+## Código do script `testar_telemetria.sh`
+
+```bash
+#!/bin/bash
+echo "======================================="
+echo "Auditoria De Telemetria - Binario Tech "
+echo " Data/Hora: $(date)"
+echo "======================================="
+
+echo -e "\n[1] Testando Rota Scania..."
+curl -s http://localhost:3023/api/v1/scania | jq .
+
+echo -e "\n[2] Testando Rota Mercedes-Benz..."
+curl -s http://localhost:3023/api/v1/mercedes | jq .
+
+echo -e "\n[3] Testando Rota Volkswagen..."
+curl -s http://localhost:3023/api/v1/vw | jq .
+
+echo -e "\n----------------------------------"
+echo "Auditoria Finalizada com Sucesso!"
+```
+
+## Comando utilizado
+
+```bash
+chmod +x testar_telemetria.sh
+./testar_telemetria.sh 
+cat relatorio.log
+```
+
+
+## Explicação
+
+| Parte | Função |
+|---|---|
+| `chmod +x` | dá permissão de execução ao script |
+| `./testar_telemetria.sh` | executa o script de auditoria |
+| `> relatorio.log` | redireciona toda a saída do script para o arquivo de log |
+
+---
+
+# Exercício 7 - Filtrar múltiplos campos em uma única chamada jq
+
+## Objetivo
+
+Filtrar a resposta da rota `/api/v1/vw` para exibir apenas os campos
+`montadora` e `status` em uma única chamada `jq`.
+
+## Comando utilizado
+
+```bash
+curl -s http://localhost:3023/api/v1/vw | jq '{montadora, status}'
+```
+
+## Explicação
+
+| Parte | Função |
+|---|---|
+| `jq '{montadora, status}'` | monta um novo objeto JSON contendo apenas os campos `montadora` e `status` |
+
+---
+
+# Exercício 8 - Localizar e encerrar processo Node.js
+
+## Objetivo da atividade
+
+Localizar o PID do processo Node.js em execução no terminal usando
+`ps aux | grep node` e encerrá-lo com o comando `kill -9 <PID>`.
+
+## Comandos utilizados
+
+```bash
+ps aux | grep node
+kill -9 <PID>
+```
+
+## Explicação
+
+| Parte | Função |
+|---|---|
+| `ps aux` | lista todos os processos em execução, com detalhes |
+| `grep node` | filtra a lista, mostrando só os processos relacionados ao Node.js |
+| `kill -9 <PID>` | encerra o processo imediatamente, usando o PID identificado |
+
+## Resultado
+
+```bash
+ps aux | grep node
+# PID encontrado na linha "node telemetria.js": 3136
+kill -9 3136
+```
+
+> Atenção: o PID certo é o da linha com `node telemetria.js` (coluna USER = meu usuário), não o da linha do próprio `grep`.
+---------------------------------------------------------------------
+# Comandos Git utilizados
+
+```bash
+git add .
+git commit -m "Adiciona atividade aula03 (curl, httpie, jq)"
+git push origin main
+``` 
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 Dia 24/09/2026
 Aula 19:

@@ -1,6 +1,11 @@
 =======================================
+<<<<<<< HEAD
 Auditoria De Telemetria - Binario Tech
  Data/Hora: Thu Aug 20 11:57:57 PM UTC 2026
+=======
+Auditoria De Telemetria - Binario Tech 
+ Data/Hora: Thu Oct  8 03:27:34 AM UTC 2026
+>>>>>>> fab881902295bb138f9bfd0d9525b8306b06067f
 =======================================
 
 [1] Testando Rota Scania...
@@ -17,7 +22,11 @@ Auditoria De Telemetria - Binario Tech
   "montadora": "Mercedes-Benz",
   "modelo": "Actros",
   "status": "OK",
+<<<<<<< HEAD
   "conexao": true,
+=======
+  "conexão": true,
+>>>>>>> fab881902295bb138f9bfd0d9525b8306b06067f
   "velocidade_media": 78
 }
 
@@ -26,8 +35,13 @@ Auditoria De Telemetria - Binario Tech
   "montadora": "Volkswagen",
   "modelo": "Delivery",
   "status": "ALERTA",
+<<<<<<< HEAD
   "conexao": false,
   "velocidade_media": 0
+=======
+  "conexão": false,
+  "velociade_media": 0
+>>>>>>> fab881902295bb138f9bfd0d9525b8306b06067f
 }
 
 ----------------------------------
