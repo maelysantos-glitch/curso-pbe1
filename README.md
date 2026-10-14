@@ -719,5 +719,356 @@ git push origin main
 ```
 
 
+Aula 04 - A avaliação é composta estritamente pelos exercícios e conceitos práticos de Arquitetura HTTP, Rotas RESTful (GET, POST, PATCH, PUT, DELETE)
+
+
+no seu terminal vc deve primeiro fazer o node frota_api.js, vc deve colocar esse seguinte código:
+
+const express = require('express');
+const app = express();
+const PORT = 3023;
+
+app.use(express.json());
+
+let veiculos = [
+        { id: 1, placa: "ABC-1234", montadora: "Scania", modelo: "R450", status: "DISPONIVEL" },
+        { id: 2, placa: "XYZ-9876", montadora: "Mercedez-Benz", modelo: "Actros", status: "EM_ROTA" }
+];
+
+app.get('/api/v1/veiculos', (req, res) => {
+        const { status } = req.query;
+        if (status) {
+                const filtrados = veiculos.filter(v => v.status.toUpperCase() === status.toUpperCase());
+                return res.status(200).json(filtrados);
+        }
+        res.status(200).json(veiculos);
+});
+
+app.get('/api/v1/veiculos/:id', (req, res) => {
+        const id = parseInt(req.params.id);
+        const veiculo = veiculos.find(v => v.id === id);
+        if (!veiculo) {
+                return res.status(404).json({ erro: "veiculo nao encontrado na base de dados." });
+        }
+        res.status(200).json(veiculo);
+});
+
+app.post('/api/v1/veiculos', (req, res) => {
+        const { placa, montadora, modelo } = req.body;
+        if (!placa || !montadora || !modelo) {
+                return res.status(400).json({ erro: "Campos 'placa', 'montadora' e 'modelo' sao obrogatorios." });
+        }
+        const novoVeiculo = {
+                id: veiculos.length + 1,
+                placa,
+                montadora,
+                modelo,
+                status: "DISPONIVEL"
+        };
+        veiculos.push(novoVeiculo);
+        res.status(201).json(novoVeiculo);
+});
+
+
+app.patch('/api/v1/veiculos/:id/status', (req, res) => {
+        const id = parseInt(req.params.id);
+        const { status } = req.body;
+        const veiculo = veiculos.find(v => v.id === id);
+
+        if (!veiculo) {
+                return res.status(404).json({ erro: "Veiculo nao encontrado." });
+        }
+        if (!status) {
+                return res.status(400).json({ erro: "O campo 'status' e obrigatorio."
+});
+        }
+
+        veiculo.status = status.toUpperCase();
+        res.status(200).json({ mensagem: "Atatus atualizado com sucesso!", veiculo
+});
+});
+
+app.delete('/api/v1/veiculos/:id', (req, res) => {
+        const id = parseInt(req.params.id);
+        const index = veiculos.findIndex(v => v.id === id);
+        if (index === -1) {
+                return res.status(404).json({ erro: "Veiculo nao encontrado." });
+        }
+        veiculos.splice(index, 1);
+        res.status(200).json({ mensagem: `Veiculo ID ${id} removido com sucesso.`
+        });
+});
+
+app.put('/api/v1/veiculos/:id', (req, res) => {
+        const id = parseInt(req.params.id);
+        const veiculo = veiculos.find(v => v.id == id);
+        if (!veiculo) {
+                return res.status(404).json({ erro: "Veiculo nao encontrado." });
+        }
+        const { placa, montadora, modelo, status } = req.body;
+        if (!placa || !montadora || !modelo || !status) {
+                return res.status(400).json({ erro: "Campos 'placa', 'montadora', 'modelo' e 'status' sao obrigatorios." });
+        }
+        veiculo.placa = placa;
+        veiculo.montadora = montadora;
+        veiculo.modelo = modelo;
+        veiculo.status = status.toUpperCase();
+        res.status(200).json(veiculo);
+
+});
+
+app.listen(PORT, () => {
+        console.log(`[Binario Tech] API de frotas rodando em http://localhost:${PORT}`);
+}); 
+
+em seguida, rode esse comando para abrir a porta:
+
+ ´´´node frota_api.js´´    
+
+agr vamos mecher no arquivo package.json :
+
+{
+  "name": "aula04",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": ""
+} 
+
+em seguida rode:
+
+npm install
+
+Agora  mecha no arquivo teste_crud.sh:
+
+!/bin/bash
+
+BASE_URL="http://localhost:3000/api/v1/veiculos"
+LOG_FILE="crud_result.log"
+
+echo "===== Execucao iniciada em $(date) =====" > "$LOG_FILE"
+
+log() {
+    echo "$1" | tee -a "$LOG_FILE"
+}
+
+log ""
+log "----- Passo 1: Cadastrando veiculo 1 (Volvo FH 540) -----"
+RESPOSTA_1=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST "$BASE_URL" \
+    -H "Content-Type: application/json" \
+    -d '{"placa": "KLL-9090", "montadora": "Volvo", "modelo": "FH 540"}')
+
+BODY_1=$(echo "$RESPOSTA_1" | sed '$d')
+STATUS_1=$(echo "$RESPOSTA_1" | tail -n1 | cut -d':' -f2)
+ID_1=$(echo "$BODY_1" | jq -r '.id')
+
+log "Status HTTP: $STATUS_1"
+log "Resposta: $BODY_1"
+log "ID do veiculo 1: $ID_1"
+
+log ""
+log "----- Passo 2: Cadastrando veiculo 2 (Scania R450) -----"
+RESPOSTA_2=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST "$BASE_URL" \
+    -H "Content-Type: application/json" \
+    -d '{"placa": "SCN-2025", "montadora": "Scania", "modelo": "R450"}')
+
+BODY_2=$(echo "$RESPOSTA_2" | sed '$d')
+STATUS_2=$(echo "$RESPOSTA_2" | tail -n1 | cut -d':' -f2)
+ID_2=$(echo "$BODY_2" | jq -r '.id')
+
+log "Status HTTP: $STATUS_2"
+log "Resposta: $BODY_2"
+log "ID do veiculo 2: $ID_2"
+
+log ""
+log "----- Passo 3: Atualizando status do veiculo 1 (ID $ID_1) para EM_ROTA -----"
+RESPOSTA_3=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X PATCH "$BASE_URL/$ID_1/status" \
+    -H "Content-Type: application/json" \
+    -d '{"status": "EM_ROTA"}')
+
+BODY_3=$(echo "$RESPOSTA_3" | sed '$d')
+STATUS_3=$(echo "$RESPOSTA_3" | tail -n1 | cut -d':' -f2)
+
+log "Status HTTP: $STATUS_3"
+log "Resposta: $BODY_3"
+
+log ""
+log "----- Passo 4: Deletando veiculo 2 (ID $ID_2) -----"
+RESPOSTA_4=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X DELETE "$BASE_URL/$ID_2")
+
+BODY_4=$(echo "$RESPOSTA_4" | sed '$d')
+STATUS_4=$(echo "$RESPOSTA_4" | tail -n1 | cut -d':' -f2)
+
+log "Status HTTP: $STATUS_4"
+log "Resposta: $BODY_4"
+
+log ""
+log "===== Execucao finalizada em $(date) ====="
+log ""
+log "Resumo:"
+log "  Veiculo 1 (ID $ID_1) - cadastrado e atualizado para EM_ROTA"
+log "  Veiculo 2 (ID $ID_2) - cadastrado e deletado"
+
+echo ""
+echo "Script finalizado. Log completo salvo em: $LOG_FILE" 
+
+
+em seguida rode chmod +x teste_crud.sh 
+e rode : 
+
+./teste_crud.sh  
+
+
+comandos:
+
+ativ 1 - curl -s http://localhost:3023/api/v1/veiculos/1 | jq
+
+
+ativ 2 curl -i -X POST http://localhost:3023/api/v1/veiculos -H "Content-Type: application/json" -d '{"placa": "KLL-9090", "montadora": "Volvo", "modelo": "FH 540"}' 
+
+ativi 3 curl -i -X POST http://localhost:3023/api/v1/veiculos \
+  -H "Content-Type: application/json" \
+  -d '{"placa": "ABC1D23", "montadora": "Volvo", "modelo": "FH 540"}'
+
+  
+ativ 4  curl -s "http://localhost:3023/api/v1/veiculos?status=DISPONIVEL" | jq 
+
+ativ 5 curl -s http://localhost:3023/api/v1/veiculos/3 | jq
+       curl -s http://localhost:3023/api/v1/veiculos | jq
+
+ativ 6 
+PATCH (atualizar o status):
+
+bash
+curl -i -X PATCH http://localhost:3023/api/v1/veiculos/3/status \
+  -H "Content-Type: application/json" \
+  -d '{"status": "EM_ROTA"}'
+
+DELETE (remover o veículo):
+
+bash
+curl -i -X DELETE http://localhost:3023/api/v1/veiculos/3
+
+Rode o PATCH primeiro, porque o DELETE apaga o veículo e depois o ID 3 deixa de existir. Para conferir o resultado:
+
+bash
+curl -s http://localhost:3023/api/v1/veiculos/3 | jq
+
+Se o ID 3 já tiver sido apagado, liste os que existem com curl -s http://localhost:3023/api/v1/veiculos | jq e use um deles. Ou cadastre um novo com o POST que reescrevi no começo. 
+
+ativ 7  Agora iremos Adicionar uma nova rota, Adicione uma nova rota PUT na API (`/api/v1/veiculos/:id`) que permite substituir todos os dados de um veiculo de uma so vez: 
+
+app.put('/api/v1/veiculos/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  const veiculo = veiculos.find(v => v.id == id);
+
+  if (!veiculo) {
+    return res.status(404).json({ erro: "Veiculo nao encontrado." });
+  }
+
+  const { placa, montadora, modelo, status } = req.body;
+
+  if (!placa || !montadora || !modelo || !status) {
+    return res.status(400).json({ erro: "Campos 'placa', 'montadora', 'modelo' e 'status' sao obrigatorios." });
+  }
+
+  veiculo.placa = placa;
+  veiculo.montadora = montadora;
+  veiculo.modelo = modelo;
+  veiculo.status = status.toUpperCase();
+
+  res.status(200).json(veiculo);
+}); 
+
+em seguida rode:
+
+curl -i -X PUT http://localhost:3023/api/v1/veiculos/3 \
+  -H "Content-Type: application/json" \
+  -d '{"placa": "NEW-0001", "montadora": "Volvo", "modelo": "FH 460", "status": "DISPONIVEL"}' 
+
+ativ 8 - faça no arquivo teste_crud.sh:
+
+#!/bin/bash
+
+BASE_URL="http://localhost:3000/api/v1/veiculos"
+LOG_FILE="crud_result.log"
+
+echo "===== Execucao iniciada em $(date) =====" > "$LOG_FILE"
+
+log() {
+    echo "$1" | tee -a "$LOG_FILE"
+}
+
+log ""
+log "----- Passo 1: Cadastrando veiculo 1 (Volvo FH 540) -----"
+RESPOSTA_1=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST "$BASE_URL" \
+    -H "Content-Type: application/json" \
+    -d '{"placa": "KLL-9090", "montadora": "Volvo", "modelo": "FH 540"}')
+
+BODY_1=$(echo "$RESPOSTA_1" | sed '$d')
+STATUS_1=$(echo "$RESPOSTA_1" | tail -n1 | cut -d':' -f2)
+ID_1=$(echo "$BODY_1" | jq -r '.id')
+
+log "Status HTTP: $STATUS_1"
+log "Resposta: $BODY_1"
+log "ID do veiculo 1: $ID_1"
+
+log ""
+log "----- Passo 2: Cadastrando veiculo 2 (Scania R450) -----"
+RESPOSTA_2=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X POST "$BASE_URL" \
+    -H "Content-Type: application/json" \
+    -d '{"placa": "SCN-2025", "montadora": "Scania", "modelo": "R450"}')
+
+BODY_2=$(echo "$RESPOSTA_2" | sed '$d')
+STATUS_2=$(echo "$RESPOSTA_2" | tail -n1 | cut -d':' -f2)
+ID_2=$(echo "$BODY_2" | jq -r '.id')
+
+log "Status HTTP: $STATUS_2"
+log "Resposta: $BODY_2"
+log "ID do veiculo 2: $ID_2"
+
+log ""
+log "----- Passo 3: Atualizando status do veiculo 1 (ID $ID_1) para EM_ROTA -----"
+RESPOSTA_3=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X PATCH "$BASE_URL/$ID_1/status" \
+    -H "Content-Type: application/json" \
+    -d '{"status": "EM_ROTA"}')
+
+BODY_3=$(echo "$RESPOSTA_3" | sed '$d')
+STATUS_3=$(echo "$RESPOSTA_3" | tail -n1 | cut -d':' -f2)
+
+log "Status HTTP: $STATUS_3"
+log "Resposta: $BODY_3"
+
+log ""
+log "----- Passo 4: Deletando veiculo 2 (ID $ID_2) -----"
+RESPOSTA_4=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -X DELETE "$BASE_URL/$ID_2")
+
+BODY_4=$(echo "$RESPOSTA_4" | sed '$d')
+STATUS_4=$(echo "$RESPOSTA_4" | tail -n1 | cut -d':' -f2)
+
+log "Status HTTP: $STATUS_4"
+log "Resposta: $BODY_4"
+
+log ""
+log "===== Execucao finalizada em $(date) ====="
+log ""
+log "Resumo:"
+log "  Veiculo 1 (ID $ID_1) - cadastrado e atualizado para EM_ROTA"
+log "  Veiculo 2 (ID $ID_2) - cadastrado e deletado"
+
+echo ""
+echo "Script finalizado. Log completo salvo em: $LOG_FILE" 
+
+e rode:
+./teste_crud.sh  
 
 
