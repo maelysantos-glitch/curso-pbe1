@@ -720,11 +720,14 @@ git push origin main
 
 Aula 04 – API de Frotas (Rotas RESTful)
 Binário Tech · Curso PBE1
+
 A avaliação é composta pelos exercícios práticos de Arquitetura HTTP e rotas RESTful (GET, POST, PATCH, PUT, DELETE). Em todos os arquivos e comandos a porta é 3023.
+
 Passo 1 – Preparar a pasta e instalar o Express
 Entre na pasta da aula e crie o package.json (no nano: Ctrl+O, Enter para salvar e Ctrl+X para sair):
 cd ~/curso-pbe1/binario_tech/Aula04
-nano package.json
+nano package.json 
+
 Conteúdo do package.json:
 {
   "name": "aula04",
@@ -741,12 +744,19 @@ Conteúdo do package.json:
   "author": "",
   "license": "ISC",
   "description": ""
-}
+} 
+
+
 Depois instale as dependências:
-npm install
+
+npm install 
+
 Passo 2 – Criar o arquivo frota_api.js
+
 nano frota_api.js
+
 Conteúdo do frota_api.js:
+
 const express = require('express');
 const app = express();
 const PORT = 3023;
@@ -827,13 +837,18 @@ app.delete('/api/v1/veiculos/:id', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`[Binario Tech] API de frotas rodando em http://localhost:${PORT}`);
-});
+}); 
+
 Passo 3 – Subir o servidor
-node frota_api.js
+
+node frota_api.js 
+
 Deixe esse terminal aberto com o servidor rodando. Os comandos curl devem ser executados em outro terminal (botão + do Cloud Shell). Quando alterar o frota_api.js, pare o servidor com Ctrl+C e suba de novo.
-Passo 4 – Criar o script teste_crud.sh
-nano teste_crud.sh
+
+Passo 4 – Criar o script teste_crud.sh 
+
 Conteúdo do teste_crud.sh:
+
 #!/bin/bash
 
 BASE_URL="http://localhost:3023/api/v1/veiculos"
@@ -904,37 +919,52 @@ log "  Veiculo 2 (ID $ID_2) - cadastrado e deletado"
 
 echo ""
 echo "Script finalizado. Log completo salvo em: $LOG_FILE"
+
 Dê permissão de execução e rode:
 chmod +x teste_crud.sh
 ./teste_crud.sh
+
 Atividades
+
 Atividade 1 – Buscar o veículo de ID 1
 curl -s http://localhost:3023/api/v1/veiculos/1 | jq
+
 Atividade 2 – Cadastrar um veículo (POST)
 curl -i -X POST http://localhost:3023/api/v1/veiculos \
   -H "Content-Type: application/json" \
   -d '{"placa": "KLL-9090", "montadora": "Volvo", "modelo": "FH 540"}'
-Atividade 3 – Cadastrar outro veículo (POST)
+
+  Atividade 3 – Cadastrar outro veículo (POST)
 curl -i -X POST http://localhost:3023/api/v1/veiculos \
   -H "Content-Type: application/json" \
   -d '{"placa": "ABC1D23", "montadora": "Volvo", "modelo": "FH 540"}'
-Atividade 4 – Filtrar por status
+
+  Atividade 4 – Filtrar por status
 curl -s "http://localhost:3023/api/v1/veiculos?status=DISPONIVEL" | jq
+
 Atividade 5 – Buscar o veículo 3 e listar todos
 curl -s http://localhost:3023/api/v1/veiculos/3 | jq
 curl -s http://localhost:3023/api/v1/veiculos | jq
+
 Atividade 6 – PATCH e DELETE
+
 Atualizar o status (PATCH):
 curl -i -X PATCH http://localhost:3023/api/v1/veiculos/3/status \
   -H "Content-Type: application/json" \
   -d '{"status": "EM_ROTA"}'
+
 Remover o veículo (DELETE). Rode o PATCH primeiro, porque depois do DELETE o ID 3 deixa de existir:
 curl -i -X DELETE http://localhost:3023/api/v1/veiculos/3
+
 Conferir o resultado:
-curl -s http://localhost:3023/api/v1/veiculos/3 | jq
-Se o ID 3 já tiver sido apagado, liste os que existem com curl -s http://localhost:3023/api/v1/veiculos | jq e use um deles, ou cadastre um novo com o POST da atividade 3.
+curl -s http://localhost:3023/api/v1/veiculos/3 | jq 
+
+Se o ID 3 já tiver sido apagado, liste os que existem com curl -s http://localhost:3023/api/v1/veiculos | jq e use um deles, ou cadastre um novo com o POST da atividade 3. 
+
+
 Atividade 7 – Nova rota PUT
-Adicione a rota PUT no frota_api.js, antes do app.listen(...). Ela substitui todos os dados de um veículo de uma só vez:
+Adicione a rota PUT no frota_api.js, antes do app.listen(...). Ela substitui todos os dados de um veículo de uma só vez
+
 app.put('/api/v1/veiculos/:id', (req, res) => {
   const id = parseInt(req.params.id);
   const veiculo = veiculos.find(v => v.id == id);
@@ -955,13 +985,17 @@ app.put('/api/v1/veiculos/:id', (req, res) => {
   veiculo.status = status.toUpperCase();
 
   res.status(200).json(veiculo);
-});
+}); 
+
 Reinicie o servidor (Ctrl+C e node frota_api.js) e teste:
+
 curl -i -X PUT http://localhost:3023/api/v1/veiculos/3 \
   -H "Content-Type: application/json" \
   -d '{"placa": "NEW-0001", "montadora": "Volvo", "modelo": "FH 460", "status": "DISPONIVEL"}'
-Atividade 8 – Rodar o teste_crud.sh
-Use o teste_crud.sh do Passo 4 (já com a porta 3023) e execute:
-./teste_crud.sh
-O servidor guarda os dados só em memória: para voltar ao estado inicial, pare e suba o frota_api.js de novo. 
 
+  Atividade 8 – Rodar o teste_crud.sh
+Use o teste_crud.sh do Passo 4 (já com a porta 3023) e execute:
+
+./teste_crud.sh
+
+O servidor guarda os dados só em memória: para voltar ao estado inicial, pare e suba o frota_api.js de novo. 
