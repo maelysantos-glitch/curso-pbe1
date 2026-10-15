@@ -1,0 +1,25 @@
+===== Execucao iniciada em qui 15 out 2026 13:36:36 -03 =====
+
+----- Passo 1: Cadastrando veiculo 1 (Volvo FH 540) -----
+Status HTTP: 201
+Resposta: {"id":16,"placa":"KLL-9090","montadora":"Volvo","modelo":"FH 540","status":"DISPONIVEL"}
+ID do veiculo 1: 16
+
+----- Passo 2: Cadastrando veiculo 2 (Scania R450) -----
+Status HTTP: 201
+Resposta: {"id":17,"placa":"SCN-2025","montadora":"Scania","modelo":"R450","status":"DISPONIVEL"}
+ID do veiculo 2: 17
+
+----- Passo 3: Atualizando status do veiculo 1 (ID 16) para EM_ROTA -----
+Status HTTP: 200
+Resposta: {"mensagem":"Status atualizado com sucesso!","veiculo":{"id":16,"placa":"KLL-9090","montadora":"Volvo","modelo":"FH 540","status":"EM_ROTA"}}
+
+----- Passo 4: Deletando veiculo 2 (ID 17) -----
+Status HTTP: 200
+Resposta: {"mensagem":"Veiculo ID 17 removido com sucesso."}
+
+===== Execucao finalizada em qui 15 out 2026 13:36:36 -03 =====
+
+Resumo:
+  Veiculo 1 (ID 16) - cadastrado e atualizado para EM_ROTA
+  Veiculo 2 (ID 17) - cadastrado e deletado
