@@ -1705,6 +1705,11 @@ Resultado esperado: `HTTP/1.1 200 OK` e o corpo `{"status":"ok","uptime":...}`. 
 ```
 [2026-10-22T14:30:00.000Z] GET /api/v1/health -> 200 (3ms)
 ```
+1 comando:
+
+```bash
+ curl -s http://localhost:3023/api/v1/health | jq .
+``` 
 
 ### Exercício 02 – Criar o arquivo routes/manutencoes.js
 
@@ -1749,9 +1754,12 @@ Este roteador só passa a funcionar depois do registro no exercício 03.
 
 O comando edita o `app.js` (adiciona o `require` e o `app.use` antes do 404), reinicia o servidor e já testa a rota nova com a chave de API:
 
+3 comando:
+
 ```bash
-sed -i "/^const motoristasRouter/a const manutencoesRouter = require('./routes/manutencoes');" app.js && sed -i "/sera registrado aqui no exercicio 03/a app.use('/api/v1/manutencoes', authMiddleware, manutencoesRouter);" app.js && { pkill -f "[n]ode app.js"; sleep 1; (nohup node app.js > server.log 2>&1 &); sleep 2; curl -i http://localhost:3023/api/v1/manutencoes -H "x-api-key: binario-tech-2026"; }
+curl -s -H "X-API-KEY: binario-tech-secret-2026" http://localhost:3023/api/v1/manutencoes | jq .
 ```
+
 
 Resultado esperado: `HTTP/1.1 200 OK` e o corpo `[]`. Sem o header `x-api-key` a mesma rota retorna `401` (isso é testado no exercício 07).
 
@@ -1781,16 +1789,13 @@ EOF
 
 O comando adiciona o `require` e coloca o `validaCnh` somente na rota POST do `routes/motoristas.js`, reinicia o servidor e envia a CNH inválida `"123"`:
 
+5 Comando certo:
 ```bash
-sed -i "/^const router = express.Router();/i const validaCnh = require('../middlewares/validaCnh');" routes/motoristas.js && sed -i "s#^router.post('/', (req, res) => {#router.post('/', validaCnh, (req, res) => {#" routes/motoristas.js && { pkill -f "[n]ode app.js"; sleep 1; (nohup node app.js > server.log 2>&1 &); sleep 2; curl -i -X POST http://localhost:3023/api/v1/motoristas -H "Content-Type: application/json" -d '{"nome": "Teste", "cnh": "123", "categoria": "E"}'; }
-```
-
-Resultado esperado: `HTTP/1.1 400 Bad Request` com o corpo:
-
-```json
-{"erro":"CNH invalida: deve conter exatamente 11 digitos numericos."}
-```
-
+curl -i -X POST http://localhost:3023/api/v1/motoristas \
+  -H "Content-Type: application/json" \
+  -H "X-API-KEY: binario-tech-secret-2026" \
+  -d '{"nome": "Teste", "cnh": "123", "categoria": "E"}'
+``` 
 ### Exercício 06 – Testar o 404 global em uma rota inexistente
 
 ```bash
@@ -1801,6 +1806,12 @@ Resultado esperado: `HTTP/1.1 404 Not Found` com o JSON padronizado do middlewar
 
 ```json
 {"erro":"Rota nao encontrada.","metodo":"GET","caminho":"/api/v1/clientes"}
+```
+
+Rode tbm o comando: 
+
+```bash
+curl -s http://localhost:3023/api/v1/clientes | jq .
 ```
 
 ### Exercício 07 – Script teste_seguranca.sh
