@@ -1065,3 +1065,834 @@ Use o `teste_crud.sh` do Passo 4 (já com a porta 3023) e execute:
 ```
 
 O servidor guarda os dados só em memória: para voltar ao estado inicial, pare e suba o `frota_api.js` de novo. 
+
+
+# 05 - Atividade | Aula 05: Roteamento Avançado no Express, Middlewares de Validacao, CORS e Tratamento Global de Erros
+
+Binário Tech · Curso PBE1
+
+A avaliação é composta pelos exercícios práticos de roteamento com `express.Router`, middlewares (logger, autenticação por chave de API e validação), CORS e tratamento global de erros (404 e 500). Em todos os arquivos e comandos a porta é **3050** e a chave de API é **binario-tech-2026**.
+
+## Rotas da API
+
+| Método | Rota | Proteção | Função |
+|--------|------|----------|--------|
+| `GET` | `/api/v1/health` | pública | verifica se a API está no ar |
+| `GET` | `/api/v1/motoristas` | pública | lista os motoristas |
+| `POST` | `/api/v1/motoristas` | pública + `validaCnh` | cadastra um motorista (CNH com 11 dígitos) |
+| `GET` | `/api/v1/manutencoes` | `authMiddleware` | lista os orçamentos de manutenção |
+| `POST` | `/api/v1/manutencoes` | `authMiddleware` | cadastra um orçamento de manutenção |
+
+## Estrutura de pastas
+
+```
+Aula05/
+├── package.json
+├── app.js
+├── middlewares/
+│   ├── loggerMiddleware.js
+│   ├── authMiddleware.js
+│   ├── notFound.js
+│   ├── errorHandler.js
+│   └── validaCnh.js          (criado no exercício 04)
+├── routes/
+│   ├── motoristas.js
+│   └── manutencoes.js        (criado no exercício 02)
+├── teste_seguranca.sh        (criado no exercício 07)
+└── audit_seguranca.log       (gerado pelo script)
+```
+
+## Passo 1 – Preparar a pasta e instalar as dependências
+
+Entre na pasta da aula, crie as subpastas e o `package.json` (no nano: `Ctrl+O`, `Enter` para salvar e `Ctrl+X` para sair):
+
+```bash
+cd ~/curso-pbe1/binario_tech
+mkdir -p prova Aula05/middlewares Aula05/routes
+cd Aula05
+nano package.json
+```
+
+Conteúdo do `package.json`:
+
+```json
+{
+  "name": "aula05",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.2.1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}
+```
+
+Depois instale as dependências:
+
+```bash
+npm install
+```
+
+## Passo 2 – Criar os middlewares base
+
+### middlewares/loggerMiddleware.js
+
+```bash
+nano middlewares/loggerMiddleware.js
+```
+
+```javascript
+function loggerMiddleware(req, res, next) {
+  const inicio = Date.now();
+
+  res.on('finish', () => {
+    const duracao = Date.now() - inicio;
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} -> ${res.statusCode} (${duracao}ms)`);
+  });
+
+  next();
+}
+
+module.exports = loggerMiddleware;
+```
+
+### middlewares/authMiddleware.js
+
+```bash
+nano middlewares/authMiddleware.js
+```
+
+```javascript
+const API_KEY = "binario-tech-2026";
+
+function authMiddleware(req, res, next) {
+  const chave = req.header('x-api-key');
+
+  if (!chave) {
+    return res.status(401).json({ erro: "Chave de API ausente. Envie o header 'x-api-key'." });
+  }
+  if (chave !== API_KEY) {
+    return res.status(403).json({ erro: "Chave de API invalida." });
+  }
+
+  next();
+}
+
+module.exports = authMiddleware;
+```
+
+### middlewares/notFound.js
+
+```bash
+nano middlewares/notFound.js
+```
+
+```javascript
+function notFound(req, res) {
+  res.status(404).json({
+    erro: "Rota nao encontrada.",
+    metodo: req.method,
+    caminho: req.originalUrl
+  });
+}
+
+module.exports = notFound;
+```
+
+### middlewares/errorHandler.js
+
+O middleware de erro precisa ter **4 parâmetros** (`err, req, res, next`), senão o Express não o reconhece como tratador de erros.
+
+```bash
+nano middlewares/errorHandler.js
+```
+
+```javascript
+function errorHandler(err, req, res, next) {
+  const status = err.status || err.statusCode || 500;
+  console.error(`[ERRO] ${req.method} ${req.originalUrl} -> ${err.message}`);
+
+  res.status(status).json({
+    erro: status >= 500 ? "Erro interno do servidor." : err.message,
+    status
+  });
+}
+
+module.exports = errorHandler;
+```
+
+## Passo 3 – Criar a rota de motoristas
+
+```bash
+nano routes/motoristas.js
+```
+
+```javascript
+const express = require('express');
+const router = express.Router();
+
+let motoristas = [
+  { id: 1, nome: "Carlos Silva", cnh: "12345678901", categoria: "E" },
+  { id: 2, nome: "Marcos Souza", cnh: "98765432109", categoria: "D" }
+];
+
+// GET - lista motoristas
+router.get('/', (req, res) => {
+  res.status(200).json(motoristas);
+});
+
+// POST - cadastra motorista
+// (o middleware validaCnh sera aplicado aqui no exercicio 05)
+router.post('/', (req, res) => {
+  const { nome, cnh, categoria } = req.body || {};
+
+  if (!nome || !cnh || !categoria) {
+    return res.status(400).json({ erro: "Campos 'nome', 'cnh' e 'categoria' sao obrigatorios." });
+  }
+
+  const novoMotorista = { id: motoristas.length + 1, nome, cnh, categoria };
+  motoristas.push(novoMotorista);
+  res.status(201).json(novoMotorista);
+});
+
+module.exports = router;
+```
+
+## Passo 4 – Criar o arquivo app.js
+
+```bash
+nano app.js
+```
+
+```javascript
+const express = require('express');
+const cors = require('cors');
+
+const loggerMiddleware = require('./middlewares/loggerMiddleware');
+const authMiddleware = require('./middlewares/authMiddleware');
+const notFound = require('./middlewares/notFound');
+const errorHandler = require('./middlewares/errorHandler');
+const motoristasRouter = require('./routes/motoristas');
+
+const app = express();
+const PORT = 3050;
+
+app.use(cors());
+app.use(express.json());
+app.use(loggerMiddleware);
+
+app.get('/api/v1/health', (req, res) => {
+  res.status(200).json({ status: "ok", uptime: process.uptime() });
+});
+
+app.use('/api/v1/motoristas', motoristasRouter);
+
+// (o roteador de manutencoes sera registrado aqui no exercicio 03, antes do 404)
+
+// 404 global: sempre DEPOIS de todas as rotas
+app.use(notFound);
+
+// tratamento global de erros: sempre o ULTIMO
+app.use(errorHandler);
+
+app.listen(PORT, () => {
+  console.log(`[Binario Tech] API rodando em http://localhost:${PORT}`);
+});
+```
+
+## Passo 5 – Subir o servidor
+
+```bash
+node app.js
+```
+
+Deixe esse terminal aberto com o servidor rodando. Os comandos `curl` devem ser executados em **outro terminal** (botão `+` do Cloud Shell). Quando alterar qualquer arquivo `.js`, pare o servidor com `Ctrl+C` e suba de novo.
+
+## Exercícios
+
+### Exercício 01 – Testar a rota de health e o loggerMiddleware
+
+No terminal 2, faça a requisição:
+
+```bash
+curl -i http://localhost:3050/api/v1/health
+```
+
+Resultado esperado: `HTTP/1.1 200 OK` e o corpo `{"status":"ok","uptime":...}`.
+
+Agora olhe o **terminal 1** (onde o servidor está rodando). O `loggerMiddleware` deve ter gerado uma linha parecida com:
+
+```
+[2026-10-22T14:30:00.000Z] GET /api/v1/health -> 200 (3ms)
+```
+
+### Exercício 02 – Criar o arquivo routes/manutencoes.js
+
+Crie o roteador que gerencia os orçamentos de manutenção dos caminhões, com rotas para listar e cadastrar:
+
+```bash
+nano routes/manutencoes.js
+```
+
+```javascript
+const express = require('express');
+const router = express.Router();
+
+let manutencoes = [];
+
+// GET - lista orcamentos de manutencao
+router.get('/', (req, res) => {
+  res.status(200).json(manutencoes);
+});
+
+// POST - cadastra orcamento de manutencao
+router.post('/', (req, res) => {
+  const { placa, descricao, valor } = req.body || {};
+
+  if (!placa || !descricao || typeof valor !== 'number') {
+    return res.status(400).json({ erro: "Campos 'placa', 'descricao' e 'valor' (numerico) sao obrigatorios." });
+  }
+
+  const novaManutencao = {
+    id: manutencoes.length + 1,
+    placa,
+    descricao,
+    valor,
+    status: "PENDENTE"
+  };
+  manutencoes.push(novaManutencao);
+  res.status(201).json(novaManutencao);
+});
+
+module.exports = router;
+```
+
+Este roteador só passa a funcionar depois do registro no exercício 03.
+
+### Exercício 03 – Registrar o roteador em /api/v1/manutencoes com authMiddleware
+
+Edite o `app.js` e faça duas alterações.
+
+1. No topo, junto dos outros `require`, adicione:
+
+```javascript
+const manutencoesRouter = require('./routes/manutencoes');
+```
+
+2. No lugar do comentário do exercício 03 (**antes** do `app.use(notFound)`), adicione:
+
+```javascript
+app.use('/api/v1/manutencoes', authMiddleware, manutencoesRouter);
+```
+
+Reinicie o servidor (`Ctrl+C` e `node app.js`) e teste. Sem a chave (deve retornar 401):
+
+```bash
+curl -i http://localhost:3050/api/v1/manutencoes
+```
+
+Com a chave (deve retornar 200 e `[]`):
+
+```bash
+curl -i http://localhost:3050/api/v1/manutencoes \
+  -H "x-api-key: binario-tech-2026"
+```
+
+Cadastrando um orçamento (deve retornar 201):
+
+```bash
+curl -i -X POST http://localhost:3050/api/v1/manutencoes \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: binario-tech-2026" \
+  -d '{"placa": "ABC-1234", "descricao": "Troca de pastilhas de freio", "valor": 1850.90}'
+```
+
+### Exercício 04 – Criar o middleware middlewares/validaCnh.js
+
+O middleware garante que a CNH enviada no POST tenha **exatamente 11 dígitos numéricos**:
+
+```bash
+nano middlewares/validaCnh.js
+```
+
+```javascript
+function validaCnh(req, res, next) {
+  const { cnh } = req.body || {};
+
+  if (!/^\d{11}$/.test(String(cnh ?? ''))) {
+    return res.status(400).json({
+      erro: "CNH invalida: deve conter exatamente 11 digitos numericos."
+    });
+  }
+
+  next();
+}
+
+module.exports = validaCnh;
+```
+
+# 05 - Atividade | Aula 05: Roteamento Avançado no Express, Middlewares de Validacao, CORS e Tratamento Global de Erros
+
+Binário Tech · Curso PBE1
+
+A avaliação é composta pelos exercícios práticos de roteamento com `express.Router`, middlewares (logger, autenticação por chave de API e validação), CORS e tratamento global de erros (404 e 500). Em todos os arquivos e comandos a porta é **3023** e a chave de API é **binario-tech-2026**.
+
+## Rotas da API
+
+| Método | Rota | Proteção | Função |
+|--------|------|----------|--------|
+| `GET` | `/api/v1/health` | pública | verifica se a API está no ar |
+| `GET` | `/api/v1/motoristas` | pública | lista os motoristas |
+| `POST` | `/api/v1/motoristas` | pública + `validaCnh` | cadastra um motorista (CNH com 11 dígitos) |
+| `GET` | `/api/v1/manutencoes` | `authMiddleware` | lista os orçamentos de manutenção |
+| `POST` | `/api/v1/manutencoes` | `authMiddleware` | cadastra um orçamento de manutenção |
+
+## Estrutura de pastas
+
+```
+Aula05/
+├── package.json
+├── app.js
+├── middlewares/
+│   ├── loggerMiddleware.js
+│   ├── authMiddleware.js
+│   ├── notFound.js
+│   ├── errorHandler.js
+│   └── validaCnh.js          (criado no exercício 04)
+├── routes/
+│   ├── motoristas.js
+│   └── manutencoes.js        (criado no exercício 02)
+├── teste_seguranca.sh        (criado no exercício 07)
+└── audit_seguranca.log       (gerado pelo script)
+```
+
+## Passo 1 – Preparar a pasta e instalar as dependências
+
+Entre na pasta da aula, crie as subpastas e o `package.json` (no nano: `Ctrl+O`, `Enter` para salvar e `Ctrl+X` para sair):
+
+```bash
+cd ~/curso-pbe1/binario_tech
+mkdir -p Aula05/middlewares Aula05/routes
+cd Aula05
+nano package.json
+```
+
+Conteúdo do `package.json`:
+
+```json
+{
+  "name": "aula05",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.2.1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}
+```
+
+Depois instale as dependências:
+
+```bash
+npm install
+```
+
+## Passo 2 – Criar os middlewares base
+
+### middlewares/loggerMiddleware.js
+
+```bash
+nano middlewares/loggerMiddleware.js
+```
+
+```javascript
+function loggerMiddleware(req, res, next) {
+  const inicio = Date.now();
+
+  res.on('finish', () => {
+    const duracao = Date.now() - inicio;
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl} -> ${res.statusCode} (${duracao}ms)`);
+  });
+
+  next();
+}
+
+module.exports = loggerMiddleware;
+```
+
+### middlewares/authMiddleware.js
+
+```bash
+nano middlewares/authMiddleware.js
+```
+
+```javascript
+const API_KEY = "binario-tech-2026";
+
+function authMiddleware(req, res, next) {
+  const chave = req.header('x-api-key');
+
+  if (!chave) {
+    return res.status(401).json({ erro: "Chave de API ausente. Envie o header 'x-api-key'." });
+  }
+  if (chave !== API_KEY) {
+    return res.status(403).json({ erro: "Chave de API invalida." });
+  }
+
+  next();
+}
+
+module.exports = authMiddleware;
+```
+
+### middlewares/notFound.js
+
+```bash
+nano middlewares/notFound.js
+```
+
+```javascript
+function notFound(req, res) {
+  res.status(404).json({
+    erro: "Rota nao encontrada.",
+    metodo: req.method,
+    caminho: req.originalUrl
+  });
+}
+
+module.exports = notFound;
+```
+
+### middlewares/errorHandler.js
+
+O middleware de erro precisa ter **4 parâmetros** (`err, req, res, next`), senão o Express não o reconhece como tratador de erros.
+
+```bash
+nano middlewares/errorHandler.js
+```
+
+```javascript
+function errorHandler(err, req, res, next) {
+  const status = err.status || err.statusCode || 500;
+  console.error(`[ERRO] ${req.method} ${req.originalUrl} -> ${err.message}`);
+
+  res.status(status).json({
+    erro: status >= 500 ? "Erro interno do servidor." : err.message,
+    status
+  });
+}
+
+module.exports = errorHandler;
+```
+
+## Passo 3 – Criar a rota de motoristas
+
+```bash
+nano routes/motoristas.js
+```
+
+```javascript
+const express = require('express');
+const router = express.Router();
+
+let motoristas = [
+  { id: 1, nome: "Carlos Silva", cnh: "12345678901", categoria: "E" },
+  { id: 2, nome: "Marcos Souza", cnh: "98765432109", categoria: "D" }
+];
+
+// GET - lista motoristas
+router.get('/', (req, res) => {
+  res.status(200).json(motoristas);
+});
+
+// POST - cadastra motorista
+// (o middleware validaCnh sera aplicado aqui no exercicio 05)
+router.post('/', (req, res) => {
+  const { nome, cnh, categoria } = req.body || {};
+
+  if (!nome || !cnh || !categoria) {
+    return res.status(400).json({ erro: "Campos 'nome', 'cnh' e 'categoria' sao obrigatorios." });
+  }
+
+  const novoMotorista = { id: motoristas.length + 1, nome, cnh, categoria };
+  motoristas.push(novoMotorista);
+  res.status(201).json(novoMotorista);
+});
+
+module.exports = router;
+```
+
+## Passo 4 – Criar o arquivo app.js
+
+```bash
+nano app.js
+```
+
+```javascript
+const express = require('express');
+const cors = require('cors');
+
+const loggerMiddleware = require('./middlewares/loggerMiddleware');
+const authMiddleware = require('./middlewares/authMiddleware');
+const notFound = require('./middlewares/notFound');
+const errorHandler = require('./middlewares/errorHandler');
+const motoristasRouter = require('./routes/motoristas');
+
+const app = express();
+const PORT = 3023;
+
+app.use(cors());
+app.use(express.json());
+app.use(loggerMiddleware);
+
+app.get('/api/v1/health', (req, res) => {
+  res.status(200).json({ status: "ok", uptime: process.uptime() });
+});
+
+app.use('/api/v1/motoristas', motoristasRouter);
+
+// (o roteador de manutencoes sera registrado aqui no exercicio 03, antes do 404)
+
+// 404 global: sempre DEPOIS de todas as rotas
+app.use(notFound);
+
+// tratamento global de erros: sempre o ULTIMO
+app.use(errorHandler);
+
+app.listen(PORT, () => {
+  console.log(`[Binario Tech] API rodando em http://localhost:${PORT}`);
+});
+```
+
+## Passo 5 – Subir o servidor
+
+```bash
+node app.js
+```
+
+Deixe esse terminal aberto com o servidor rodando. Os comandos `curl` devem ser executados em **outro terminal** (botão `+` do Cloud Shell). Quando alterar qualquer arquivo `.js`, pare o servidor com `Ctrl+C` e suba de novo.
+
+## Exercícios
+
+Cada exercício tem **um único comando**, para colar no terminal 2 (botão `+` do Cloud Shell) dentro da pasta `~/curso-pbe1/binario_tech/Aula05`. O servidor do Passo 5 continua rodando no terminal 1.
+
+Nos exercícios 03 e 05 o próprio comando reinicia o servidor em segundo plano. A partir daí os logs do `loggerMiddleware` vão para o arquivo `server.log` (para acompanhar: `tail -f server.log`).
+
+### Exercício 01 – Testar a rota de health e o loggerMiddleware
+
+```bash
+curl -i http://localhost:3023/api/v1/health
+```
+
+Resultado esperado: `HTTP/1.1 200 OK` e o corpo `{"status":"ok","uptime":...}`. No **terminal 1** (onde o servidor está rodando) deve aparecer a linha gerada pelo `loggerMiddleware`:
+
+```
+[2026-10-22T14:30:00.000Z] GET /api/v1/health -> 200 (3ms)
+```
+
+### Exercício 02 – Criar o arquivo routes/manutencoes.js
+
+```bash
+cat > routes/manutencoes.js << 'EOF'
+const express = require('express');
+const router = express.Router();
+
+let manutencoes = [];
+
+// GET - lista orcamentos de manutencao
+router.get('/', (req, res) => {
+  res.status(200).json(manutencoes);
+});
+
+// POST - cadastra orcamento de manutencao
+router.post('/', (req, res) => {
+  const { placa, descricao, valor } = req.body || {};
+
+  if (!placa || !descricao || typeof valor !== 'number') {
+    return res.status(400).json({ erro: "Campos 'placa', 'descricao' e 'valor' (numerico) sao obrigatorios." });
+  }
+
+  const novaManutencao = {
+    id: manutencoes.length + 1,
+    placa,
+    descricao,
+    valor,
+    status: "PENDENTE"
+  };
+  manutencoes.push(novaManutencao);
+  res.status(201).json(novaManutencao);
+});
+
+module.exports = router;
+EOF
+```
+
+Este roteador só passa a funcionar depois do registro no exercício 03.
+
+### Exercício 03 – Registrar o roteador em /api/v1/manutencoes com authMiddleware
+
+O comando edita o `app.js` (adiciona o `require` e o `app.use` antes do 404), reinicia o servidor e já testa a rota nova com a chave de API:
+
+```bash
+sed -i "/^const motoristasRouter/a const manutencoesRouter = require('./routes/manutencoes');" app.js && sed -i "/sera registrado aqui no exercicio 03/a app.use('/api/v1/manutencoes', authMiddleware, manutencoesRouter);" app.js && { pkill -f "[n]ode app.js"; sleep 1; (nohup node app.js > server.log 2>&1 &); sleep 2; curl -i http://localhost:3023/api/v1/manutencoes -H "x-api-key: binario-tech-2026"; }
+```
+
+Resultado esperado: `HTTP/1.1 200 OK` e o corpo `[]`. Sem o header `x-api-key` a mesma rota retorna `401` (isso é testado no exercício 07).
+
+### Exercício 04 – Criar o middleware middlewares/validaCnh.js
+
+O middleware garante que a CNH enviada no POST tenha **exatamente 11 dígitos numéricos**:
+
+```bash
+cat > middlewares/validaCnh.js << 'EOF'
+function validaCnh(req, res, next) {
+  const { cnh } = req.body || {};
+
+  if (!/^\d{11}$/.test(String(cnh ?? ''))) {
+    return res.status(400).json({
+      erro: "CNH invalida: deve conter exatamente 11 digitos numericos."
+    });
+  }
+
+  next();
+}
+
+module.exports = validaCnh;
+EOF
+```
+
+### Exercício 05 – Aplicar o validaCnh apenas no POST de motoristas e testar com CNH inválida
+
+O comando adiciona o `require` e coloca o `validaCnh` somente na rota POST do `routes/motoristas.js`, reinicia o servidor e envia a CNH inválida `"123"`:
+
+```bash
+sed -i "/^const router = express.Router();/i const validaCnh = require('../middlewares/validaCnh');" routes/motoristas.js && sed -i "s#^router.post('/', (req, res) => {#router.post('/', validaCnh, (req, res) => {#" routes/motoristas.js && { pkill -f "[n]ode app.js"; sleep 1; (nohup node app.js > server.log 2>&1 &); sleep 2; curl -i -X POST http://localhost:3023/api/v1/motoristas -H "Content-Type: application/json" -d '{"nome": "Teste", "cnh": "123", "categoria": "E"}'; }
+```
+
+Resultado esperado: `HTTP/1.1 400 Bad Request` com o corpo:
+
+```json
+{"erro":"CNH invalida: deve conter exatamente 11 digitos numericos."}
+```
+
+### Exercício 06 – Testar o 404 global em uma rota inexistente
+
+```bash
+curl -i http://localhost:3023/api/v1/clientes
+```
+
+Resultado esperado: `HTTP/1.1 404 Not Found` com o JSON padronizado do middleware global:
+
+```json
+{"erro":"Rota nao encontrada.","metodo":"GET","caminho":"/api/v1/clientes"}
+```
+
+### Exercício 07 – Script teste_seguranca.sh
+
+O comando cria o script, dá permissão de execução e já o executa. Ele faz 3 tentativas **sem** chave de API e 1 **com** chave válida na rota protegida, salvando tudo em `audit_seguranca.log`:
+
+```bash
+cat > teste_seguranca.sh << 'EOF' && chmod +x teste_seguranca.sh && ./teste_seguranca.sh
+#!/bin/bash
+
+URL="http://localhost:3023/api/v1/manutencoes"
+CHAVE="binario-tech-2026"
+LOG_FILE="audit_seguranca.log"
+
+echo "===== Auditoria de seguranca iniciada em $(date) =====" > "$LOG_FILE"
+
+log() {
+  echo "$1" | tee -a "$LOG_FILE"
+}
+
+for i in 1 2 3; do
+  log ""
+  log "----- Tentativa $i: SEM chave de API -----"
+  RESPOSTA=$(curl -s -w "\nHTTP_STATUS:%{http_code}" "$URL")
+
+  BODY=$(echo "$RESPOSTA" | sed '$d')
+  STATUS=$(echo "$RESPOSTA" | tail -n1 | cut -d':' -f2)
+
+  log "Status HTTP: $STATUS"
+  log "Resposta: $BODY"
+done
+
+log ""
+log "----- Tentativa 4: COM chave de API valida -----"
+RESPOSTA=$(curl -s -w "\nHTTP_STATUS:%{http_code}" -H "x-api-key: $CHAVE" "$URL")
+
+BODY=$(echo "$RESPOSTA" | sed '$d')
+STATUS=$(echo "$RESPOSTA" | tail -n1 | cut -d':' -f2)
+
+log "Status HTTP: $STATUS"
+log "Resposta: $BODY"
+
+log ""
+log "===== Auditoria finalizada em $(date) ====="
+echo ""
+echo "Script finalizado. Log completo salvo em: $LOG_FILE"
+EOF
+```
+
+Resultado esperado: três tentativas com `Status HTTP: 401` e a quarta com `Status HTTP: 200`. O resultado completo fica salvo em `audit_seguranca.log`.
+
+### Exercício 08 – Encontrar o processo da API e encerrar com kill -9
+
+O comando mostra a linha do processo `node app.js` (o primeiro número depois do usuário é o PID) e em seguida o encerra com `kill -9`:
+
+```bash
+ps aux | grep '[n]ode app.js' && kill -9 $(pgrep -f "[n]ode app.js")
+```
+
+O `[n]ode` no `grep` evita que a própria linha do `grep` apareça na lista. Resultado esperado: o `ps` mostra o processo e, logo depois, ele é encerrado. Para confirmar, o `curl http://localhost:3023/api/v1/health` passa a falhar com `Connection refused`.
+
+Observação: `kill -9` (SIGKILL) encerra o processo à força, sem dar chance de ele finalizar com segurança. Em situações normais prefira `kill <PID>` (SIGTERM) ou `Ctrl+C`, e deixe o `-9` como último recurso.
+
+## Entrega no Git
+
+Com todos os exercícios prontos, rode **um único comando** dentro da pasta `~/curso-pbe1/binario_tech/Aula05`. Ele ignora a pasta `node_modules` e o `server.log`, adiciona os arquivos, faz o commit e envia para o GitHub:
+
+```bash
+printf "node_modules/\nserver.log\n" > git add . && git commit -m "Aula 05: roteamento avancado, middlewares, CORS e tratamento global de erros" && git push
+```
+
+Para conferir o que foi enviado:
+
+```bash
+git status && git log --oneline -n 3
+```
+
+Se for o primeiro push da branch e o Git reclamar de `no upstream branch`, use no lugar do `git push`:
+
+```bash
+git push -u origin main
+```
+
+Se o push for recusado por causa de commits que estão só no GitHub, rode `git pull --rebase` e depois `git push` de novo.
+
+## Resumo dos arquivos entregues
+
+| Arquivo | Exercício |
+|---------|-----------|
+| `routes/manutencoes.js` | 02 |
+| `app.js` (com o roteador registrado) | 03 |
+| `middlewares/validaCnh.js` | 04 |
+| `routes/motoristas.js` (com `validaCnh` no POST) | 05 |
+| `teste_seguranca.sh` e `audit_seguranca.log` | 07 |
+| `.gitignore` e commit enviado com `git push` | Entrega | 
